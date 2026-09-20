@@ -1,4 +1,4 @@
-name: Windows RDP Custom User
+name: Windows RDP via Pinggy Clean
 
 on: [push]
 
@@ -22,11 +22,11 @@ jobs:
         echo "RDP_USER=$user" | Out-File -FilePath $env:GITHUB_ENV -Append
         echo "RDP_PASS=$pass" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-    - name: Start Pinggy Tunnel
+    - name: Start Pinggy & Show Info
       run: |
         Start-Process -FilePath "ssh.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -R 0:localhost:3389 a.pinggy.io" -NoNewWindow -RedirectStandardOutput pinggy.log -RedirectStandardError pinggy.err
 
-        Write-Output "Establishing tunnel..."
+        Write-Output "Waiting for tunnel establishment..."
         Start-Sleep -Seconds 8
 
         Write-Output "============================================"
