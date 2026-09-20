@@ -23,16 +23,28 @@ jobs:
       run: |
         Start-Process -FilePath "ssh.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R 0:localhost:3389 a.pinggy.io" -NoNewWindow -RedirectStandardOutput pinggy.log -RedirectStandardError pinggy.err
         
-        Start-Sleep -Seconds 10
-        Write-Output "--- Pinggy TCP Address Logs ---"
-        Get-Content pinggy.err -ErrorAction SilentlyContinue
-        Get-Content pinggy.log -ErrorAction SilentlyContinue
+        $url = "جاري الاستخراج..."
+        for ($i=0; $i -lt 15; $i++) {
+          Start-Sleep -Seconds 2
+          $content = Get-Content pinggy.err, pinggy.log -ErrorAction SilentlyContinue
+          $match = $content | Select-String "tcp://([a-zA-Z0-9\.\-]+:\d+)"
+          if ($match) {
+            $url = $match.Matches[0].Value
+            break
+          }
+        }
 
         Write-Output "============================================"
         Write-Output "||      ✅ RDP READY (PINGGY TCP)          ||"
         Write-Output "============================================"
+        Write-Output "Address: $url"
         Write-Output "Username: kamel007"
         Write-Output "Password: Kamel@123"
+        Write-Output "============================================"
+        Write-Output "Instructions:"
+        Write-Output "1. Press Win + R, type 'mstsc' and hit Enter"
+        Write-Output "2. Connect to: $url"
+        Write-Output "3. Use credentials above"
         Write-Output "============================================"
 
         while ($true) { Start-Sleep -Seconds 300 }
