@@ -17,9 +17,9 @@ jobs:
     - name: Create Custom Admin User
       run: |
         $user = "badry"
-        $pass = "Badry2026#Secure!"
-        net user $user $pass /add
-        net localgroup administrators $user /add
+        $pass = "Badry2026!"
+        echo Y | net user "$user" "$pass" /add
+        net localgroup administrators "$user" /add
         echo "RDP_USER=$user" | Out-File -FilePath $env:GITHUB_ENV -Append
         echo "RDP_PASS=$pass" | Out-File -FilePath $env:GITHUB_ENV -Append
 
