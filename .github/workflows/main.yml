@@ -17,7 +17,7 @@ jobs:
     - name: Create Custom Admin User
       run: |
         $user = "badry"
-        $pass = "Badry@2026"
+        $pass = "Badry2026#Secure!"
         net user $user $pass /add
         net localgroup administrators $user /add
         echo "RDP_USER=$user" | Out-File -FilePath $env:GITHUB_ENV -Append
@@ -39,6 +39,12 @@ jobs:
         Write-Output "Pinggy Logs / Address Output:"
         Get-Content pinggy.log -ErrorAction SilentlyContinue
         Get-Content pinggy.err -ErrorAction SilentlyContinue
+        Write-Output "============================================"
+
+        Write-Output "Instructions:"
+        Write-Output "1. Press Win + R, type 'mstsc' and hit Enter"
+        Write-Output "2. Connect using the TCP address shown in Pinggy logs above"
+        Write-Output "3. Use username/password shown above"
         Write-Output "============================================"
 
     - name: Keep Alive Loop
