@@ -23,16 +23,16 @@ jobs:
       run: |
         Start-Process -FilePath "ssh.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R 0:localhost:3389 a.pinggy.io" -NoNewWindow -RedirectStandardOutput pinggy.log -RedirectStandardError pinggy.err
         
-        $url = "جاري الاستخراج..."
+        $url = $null
         for ($i=0; $i -lt 15; $i++) {
           Start-Sleep -Seconds 2
-          $content = Get-Content pinggy.err, pinggy.log -ErrorAction SilentlyContinue
-          $match = $content | Select-String "tcp://([a-zA-Z0-9\.\-]+:\d+)"
-          if ($match) {
-            $url = $match.Matches[0].Value
+          $content = (Get-Content pinggy.err, pinggy.log -ErrorAction SilentlyContinue) -join "`n"
+          if ($content -match "([a-zA-Z0-9\.\-]+:\d{4,5})") {
+            $url = $Matches[1]
             break
           }
         }
+        if (-not $url) { $url = "فشل الاستخراج - انظر الـ debug below" }
 
         Write-Output "============================================"
         Write-Output "||      ✅ RDP READY (PINGGY TCP)          ||"
@@ -47,6 +47,16 @@ jobs:
         Write-Output "3. Use credentials above"
         Write-Output "============================================"
 
+    - name: Debug Pinggy Logs
+      if: always()
+      run: |
+        Write-Output "=== pinggy.log ==="
+        Get-Content pinggy.log -ErrorAction SilentlyContinue
+        Write-Output "=== pinggy.err ==="
+        Get-Content pinggy.err -ErrorAction SilentlyContinue
+
+    - name: Keep Alive
+      run: |
         while ($true) { Start-Sleep -Seconds 300 }
 
     - name: Cleanup Process
