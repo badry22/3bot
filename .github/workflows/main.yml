@@ -1,4 +1,4 @@
-name: Windows RDP via Localhost.run
+name: Windows RDP via Serveo
 
 on: [push]
 
@@ -22,15 +22,15 @@ jobs:
         echo "RDP_USER=$user" | Out-File -FilePath $env:GITHUB_ENV -Append
         echo "RDP_PASS=$pass" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-    - name: Start Tunnel & Show Info
+    - name: Start Serveo Tunnel & Show Info
       run: |
-        Start-Process -FilePath "ssh.exe" -ArgumentList "-o StrictHostKeyChecking=no -R 0:localhost:3389 tunnel.localhost.run" -NoNewWindow -RedirectStandardOutput tunnel.log -RedirectStandardError tunnel.err
+        Start-Process -FilePath "ssh.exe" -ArgumentList "-o StrictHostKeyChecking=no -R 0:localhost:3389 serveo.net" -NoNewWindow -RedirectStandardOutput tunnel.log -RedirectStandardError tunnel.err
 
         Write-Output "Waiting for tunnel establishment..."
         Start-Sleep -Seconds 10
 
         Write-Output "============================================"
-        Write-Output "||      ✅ RDP READY (LOCALHOST.RUN)       ||"
+        Write-Output "||      ✅ RDP READY (SERVEO TCP)          ||"
         Write-Output "============================================"
         Write-Output "Username: ${env:RDP_USER}"
         Write-Output "Password: ${env:RDP_PASS}"
@@ -42,7 +42,7 @@ jobs:
 
         Write-Output "Instructions:"
         Write-Output "1. Press Win + R, type 'mstsc' and hit Enter"
-        Write-Output "2. Connect using the TCP address shown in logs above"
+        Write-Output "2. Connect using the TCP forwarding address/port shown in logs above"
         Write-Output "3. Use username/password shown above"
         Write-Output "============================================"
 
