@@ -56,7 +56,7 @@ jobs:
         }
 
         Write-Output "============================================"
-        Write-Output "||      ✅ RDP CONNECTION DETAILS          ||"
+        Write-Output "||     ✅ RDP CONNECTION DETAILS         ||"
         Write-Output "============================================"
         Write-Output "Address: $tunnelUrl"
         Write-Output "Username: kamel007"
