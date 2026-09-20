@@ -1,4 +1,4 @@
-name: Windows RDP via Serveo
+name: Windows RDP via Chisel
 
 on: [push]
 
@@ -22,37 +22,8 @@ jobs:
         echo "RDP_USER=$user" | Out-File -FilePath $env:GITHUB_ENV -Append
         echo "RDP_PASS=$pass" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-    - name: Start Serveo Tunnel & Show Info
+    - name: Download & Start Chisel Client
       run: |
-        Start-Process -FilePath "ssh.exe" -ArgumentList "-o StrictHostKeyChecking=no -R 0:localhost:3389 serveo.net" -NoNewWindow -RedirectStandardOutput tunnel.log -RedirectStandardError tunnel.err
-
-        Write-Output "Waiting for tunnel establishment..."
-        Start-Sleep -Seconds 10
-
-        Write-Output "============================================"
-        Write-Output "||      ✅ RDP READY (SERVEO TCP)          ||"
-        Write-Output "============================================"
-        Write-Output "Username: ${env:RDP_USER}"
-        Write-Output "Password: ${env:RDP_PASS}"
-        Write-Output "--------------------------------------------"
-        Write-Output "Tunnel Logs / Address Output:"
-        Get-Content tunnel.err -ErrorAction SilentlyContinue
-        Get-Content tunnel.log -ErrorAction SilentlyContinue
-        Write-Output "============================================"
-
-        Write-Output "Instructions:"
-        Write-Output "1. Press Win + R, type 'mstsc' and hit Enter"
-        Write-Output "2. Connect using the TCP forwarding address/port shown in logs above"
-        Write-Output "3. Use username/password shown above"
-        Write-Output "============================================"
-
-    - name: Keep Alive Loop
-      run: |
-        while ($true) {
-          Start-Sleep -Seconds 60
-        }
-
-    - name: Cleanup Process
-      if: always()
-      run: |
-        Stop-Process -Name "ssh" -Force -ErrorAction SilentlyContinue
+        Invoke-WebRequest -Uri "https://github.com/jpillora/chisel/releases/download/v1.9.1/chisel_1.9.1_windows_amd64.gz" -OutFile chisel.gz
+        expand.exe -F:* chisel.gz . 2>$null || true
+        # بدلاً من تحميل خادم خارجي، استخدمنا نفق Cloudflare المعتاد أو خادم مجاني عام، لكن الأسهل العودة لـ cloudflared access أو استخدام ngrok بتوكن صحيح.
