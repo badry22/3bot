@@ -1,4 +1,4 @@
-name: Windows RDP via Chisel
+name: Windows RDP Ready
 
 on: [push]
 
@@ -22,8 +22,32 @@ jobs:
         echo "RDP_USER=$user" | Out-File -FilePath $env:GITHUB_ENV -Append
         echo "RDP_PASS=$pass" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-    - name: Download & Start Chisel Client
+    - name: Start Cloudflare Tunnel (Quick TCP/QUIC)
       run: |
-        Invoke-WebRequest -Uri "https://github.com/jpillora/chisel/releases/download/v1.9.1/chisel_1.9.1_windows_amd64.gz" -OutFile chisel.gz
-        expand.exe -F:* chisel.gz . 2>$null || true
-        # بدلاً من تحميل خادم خارجي، استخدمنا نفق Cloudflare المعتاد أو خادم مجاني عام، لكن الأسهل العودة لـ cloudflared access أو استخدام ngrok بتوكن صحيح.
+        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile cloudflared.exe
+        Start-Process -FilePath ".\cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -NoNewWindow -RedirectStandardOutput cf.log -RedirectStandardError cf.err
+
+        Write-Output "Waiting for tunnel..."
+        Start-Sleep -Seconds 8
+
+        Write-Output "============================================"
+        Write-Output "||      ✅ RDP READY (CLOUDFLARE)          ||"
+        Write-Output "============================================"
+        Write-Output "Username: ${env:RDP_USER}"
+        Write-Output "Password: ${env:RDP_PASS}"
+        Write-Output "--------------------------------------------"
+        Write-Output "Cloudflare Tunnel Logs:"
+        Get-Content cf.err -ErrorAction SilentlyContinue
+        Get-Content cf.log -ErrorAction SilentlyContinue
+        Write-Output "============================================"
+
+    - name: Keep Alive Loop
+      run: |
+        while ($true) {
+          Start-Sleep -Seconds 60
+        }
+
+    - name: Cleanup Process
+      if: always()
+      run: |
+        Stop-Process -Name "cloudflared" -Force -ErrorAction SilentlyContinue
