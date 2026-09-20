@@ -22,23 +22,22 @@ jobs:
         echo "RDP_USER=$user" | Out-File -FilePath $env:GITHUB_ENV -Append
         echo "RDP_PASS=$pass" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-    - name: Start Cloudflare Tunnel (Quick TCP/QUIC)
+    - name: Start Tunnel & Show Address
       run: |
-        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile cloudflared.exe
-        Start-Process -FilePath ".\cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -NoNewWindow -RedirectStandardOutput cf.log -RedirectStandardError cf.err
+        Start-Process -FilePath "ssh.exe" -ArgumentList "-o StrictHostKeyChecking=no -R 0:localhost:3389 tunnel.localhost.run" -NoNewWindow -RedirectStandardOutput tunnel.log -RedirectStandardError tunnel.err
 
         Write-Output "Waiting for tunnel..."
-        Start-Sleep -Seconds 8
+        Start-Sleep -Seconds 12
 
         Write-Output "============================================"
-        Write-Output "||      ✅ RDP READY (CLOUDFLARE)          ||"
+        Write-Output "||      ✅ RDP READY (LOCALHOST.RUN)       ||"
         Write-Output "============================================"
         Write-Output "Username: ${env:RDP_USER}"
         Write-Output "Password: ${env:RDP_PASS}"
         Write-Output "--------------------------------------------"
-        Write-Output "Cloudflare Tunnel Logs:"
-        Get-Content cf.err -ErrorAction SilentlyContinue
-        Get-Content cf.log -ErrorAction SilentlyContinue
+        Write-Output "Check error logs below for your IP:PORT:"
+        Get-Content tunnel.err -ErrorAction SilentlyContinue
+        Get-Content tunnel.log -ErrorAction SilentlyContinue
         Write-Output "============================================"
 
     - name: Keep Alive Loop
@@ -50,4 +49,4 @@ jobs:
     - name: Cleanup Process
       if: always()
       run: |
-        Stop-Process -Name "cloudflared" -Force -ErrorAction SilentlyContinue
+        Stop-Process -Name "ssh" -Force -ErrorAction SilentlyContinue
