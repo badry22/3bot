@@ -15,11 +15,22 @@ jobs:
         Remove-Item ngrok.zip
         Copy-Item "$env:USERPROFILE\ngrok.exe" "$env:GITHUB_WORKSPACE"
 
+    - name: Enable RDP and Firewall
+      run: |
+        Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        New-NetFirewallRule -DisplayName "Allow RDP via Ngrok" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3389
+
+    - name: Create Admin User
+      run: |
+        net user kamel007 Kamel@123 /add
+        net localgroup administrators kamel007 /add
+
     - name: Configure and Start Ngrok
       run: |
         $env:USERPROFILE = "C:\Users\runneradmin"
         .\ngrok.exe config add-authtoken "${{ secrets.NGROK_AUTH_TOKEN }}"
-        Start-Process -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389 --log=stdout" -NoNewWindow -RedirectStandardOutput ngrok.log
+        Start-Process -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389 --config C:\Users\runneradmin\AppData\Local\ngrok\ngrok.yml --log=stdout" -NoNewWindow -RedirectStandardOutput ngrok.log
 
         $tunnelUrl = $null
         $timeout = 60
@@ -56,17 +67,6 @@ jobs:
         Write-Output "============================================"
 
         while ($true) { Start-Sleep -Seconds 300 }
-
-    - name: Enable RDP and Firewall
-      run: |
-        Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        New-NetFirewallRule -DisplayName "Allow RDP via Ngrok" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3389
-
-    - name: Create Admin User
-      run: |
-        net user kamel007 Kamel@123 /add
-        net localgroup administrators kamel007 /add
 
     - name: Cleanup Ngrok
       if: always()
