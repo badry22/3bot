@@ -1,4 +1,4 @@
-name: Windows RDP via Pinggy
+name: Windows RDP Custom User
 
 on: [push]
 
@@ -14,50 +14,38 @@ jobs:
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         New-NetFirewallRule -DisplayName "Allow RDP" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3389
 
-    - name: Create Admin User
+    - name: Create Custom Admin User
       run: |
-        net user kamel007 Kamel@123 /add
-        net localgroup administrators kamel007 /add
+        $user = "badry"
+        $pass = "Badry@2026"
+        net user $user $pass /add
+        net localgroup administrators $user /add
+        echo "RDP_USER=$user" | Out-File -FilePath $env:GITHUB_ENV -Append
+        echo "RDP_PASS=$pass" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-    - name: Start Pinggy TCP Tunnel
+    - name: Start Pinggy Tunnel
       run: |
-        Start-Process -FilePath "ssh.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R 0:localhost:3389 a.pinggy.io" -NoNewWindow -RedirectStandardOutput pinggy.log -RedirectStandardError pinggy.err
-        
-        $url = $null
-        for ($i=0; $i -lt 15; $i++) {
-          Start-Sleep -Seconds 2
-          $content = (Get-Content pinggy.err, pinggy.log -ErrorAction SilentlyContinue) -join "`n"
-          if ($content -match "([a-zA-Z0-9\.\-]+:\d{4,5})") {
-            $url = $Matches[1]
-            break
-          }
-        }
-        if (-not $url) { $url = "فشل الاستخراج - انظر الـ debug below" }
+        Start-Process -FilePath "ssh.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -R 0:localhost:3389 a.pinggy.io" -NoNewWindow -RedirectStandardOutput pinggy.log -RedirectStandardError pinggy.err
+
+        Write-Output "Establishing tunnel..."
+        Start-Sleep -Seconds 8
 
         Write-Output "============================================"
         Write-Output "||      ✅ RDP READY (PINGGY TCP)          ||"
         Write-Output "============================================"
-        Write-Output "Address: $url"
-        Write-Output "Username: kamel007"
-        Write-Output "Password: Kamel@123"
-        Write-Output "============================================"
-        Write-Output "Instructions:"
-        Write-Output "1. Press Win + R, type 'mstsc' and hit Enter"
-        Write-Output "2. Connect to: $url"
-        Write-Output "3. Use credentials above"
-        Write-Output "============================================"
-
-    - name: Debug Pinggy Logs
-      if: always()
-      run: |
-        Write-Output "=== pinggy.log ==="
+        Write-Output "Username: ${env:RDP_USER}"
+        Write-Output "Password: ${env:RDP_PASS}"
+        Write-Output "--------------------------------------------"
+        Write-Output "Pinggy Logs / Address Output:"
         Get-Content pinggy.log -ErrorAction SilentlyContinue
-        Write-Output "=== pinggy.err ==="
         Get-Content pinggy.err -ErrorAction SilentlyContinue
+        Write-Output "============================================"
 
-    - name: Keep Alive
+    - name: Keep Alive Loop
       run: |
-        while ($true) { Start-Sleep -Seconds 300 }
+        while ($true) {
+          Start-Sleep -Seconds 60
+        }
 
     - name: Cleanup Process
       if: always()
